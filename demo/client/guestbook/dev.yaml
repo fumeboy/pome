@@ -1,8 +1,0 @@
-register_name: etcd
-register_addr: 127.0.0.1:2379
-register_path: /pome/service/
-#max_limit_qps:
-trace_report_addr: http://127.0.0.1/api/v1/spans
-trace_sample_type: const
-trace_sample_rate: 1
-trace_client_service_name: default

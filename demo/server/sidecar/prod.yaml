@@ -1,0 +1,25 @@
+server:
+  sidecar_port: 9101
+  port: 9100
+  service_name: guestbook
+  limit_qps: 50000
+  prometheus:
+    switch_on: false
+    port: 8081
+register:
+  switch_on: true
+  register_path: /pome/service/
+  timeout: 1s
+  heart_beat: 10
+  register_name: etcd
+  register_addr: 127.0.0.1:2379
+log:
+  level: debug
+  path: ./logout/
+  chan_size: 10000
+  console_log: true
+trace:
+  switch_on: true
+  report_addr: http://127.0.0.1:9411/api/v1/spans
+  sample_type: const
+  sample_rate: 1

@@ -1,4 +1,7 @@
 *logout*
 *volumes*
 .idea
-
+/demo/client/main/main
+/demo/client/sidecar/sidecar
+/demo/server/main/main
+/demo/server/sidecar/sidecar

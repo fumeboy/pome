@@ -240,7 +240,6 @@ func (e *etcd_registryT) GetService(ctx context.Context, name string) (service *
 		var tmpService registry.Service
 		err = json.Unmarshal(value, &tmpService)
 		if err != nil {
-			fmt.Println(123)
 			return
 		}
 
@@ -290,7 +289,6 @@ func (e *etcd_registryT) syncServiceFromEtcd() {
 			var tmpService registry.Service
 			err = json.Unmarshal(value, &tmpService)
 			if err != nil {
-				fmt.Println(123)
 				fmt.Printf("unmarshal failed, err:%v value:%s", err, string(value))
 				return
 			}

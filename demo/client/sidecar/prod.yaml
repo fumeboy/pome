@@ -1,0 +1,23 @@
+client:
+  sidecar_port: 9110
+  conn_timeout: 100ms
+  read_timeout: 1s
+  write_timeout: 1s
+  limit_qps: 50000
+register:
+  switch_on: true
+  register_path: /pome/service/
+  timeout: 1s
+  heart_beat: 10
+  register_name: etcd
+  register_addr: 127.0.0.1:2379
+log:
+  level: debug
+  path: ./logout/
+  chan_size: 10000
+  console_log: true
+trace:
+  switch_on: true
+  report_addr: http://127.0.0.1:9411/api/v1/spans
+  sample_type: const
+  sample_rate: 1
