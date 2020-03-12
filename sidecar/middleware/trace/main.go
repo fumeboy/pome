@@ -11,12 +11,11 @@ import (
 	"github.com/fumeboy/pome/util/logs"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
-	"github.com/uber/jaeger-client-go/transport/zipkin"
 	"google.golang.org/grpc/metadata"
 )
 
 const (
-	TraceID = "trace_id"
+	TraceID      = "trace_id"
 	binHdrSuffix = "-bin"
 )
 
@@ -60,30 +59,20 @@ func encodeKeyValue(k, v string) (string, string) {
 }
 
 func InitTrace(serviceName, reportAddr, sampleType string, rate float64) (err error) {
-	transport, err := zipkin.NewHTTPTransport(
-		reportAddr,
-		zipkin.HTTPBatchSize(16),
-		zipkin.HTTPLogger(jaeger.StdLogger),
-	)
-	if err != nil {
-		logs.Error(context.TODO(), "ERROR: cannot init zipkin: %v\n", err)
-		return
-	}
-
 	cfg := &config.Configuration{
+		ServiceName: serviceName,
 		Sampler: &config.SamplerConfig{
-			Type:  sampleType,
-			Param: rate,
+			Type:  sampleType, //const = 固定采样
+			Param: rate,       // 1=全采样、0=不采样
 		},
 		Reporter: &config.ReporterConfig{
-			LogSpans: true,
+			LogSpans:           true,
+			LocalAgentHostPort: reportAddr,
 		},
 	}
-
-	r := jaeger.NewRemoteReporter(transport)
-	tracer, closer, err := cfg.New(serviceName,
+	tracer, closer, err := cfg.NewTracer(
 		config.Logger(jaeger.StdLogger),
-		config.Reporter(r))
+	)
 	if err != nil {
 		logs.Error(context.TODO(), "ERROR: cannot init Jaeger: %v\n", err)
 		return

@@ -11,5 +11,5 @@ func initTrace() (err error) {
 		return
 	}
 	IfTrace = true
-	return trace.InitTrace(service_name, conf.Trace.ReportAddr, conf.Trace.SampleType, conf.Trace.SampleRate)
+	return trace.InitTrace(conf.NodeName, conf.Trace.ReportAddr, conf.Trace.SampleType, conf.Trace.SampleRate)
 }

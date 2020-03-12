@@ -23,10 +23,10 @@ var conf = &confT{}
 var (
 	Register registry.Registry
 	IfTrace bool
-	service_name string
 )
 
 type confT struct {
+	NodeName  string
 	Server     *ServerT
 	Client     *ClientT
 	Register   registerConf
@@ -76,11 +76,6 @@ func init() {
 			}else{
 				Server = conf.Server
 				Client = conf.Client
-				if Server == nil {
-					service_name = "default"
-				}else{
-					service_name = Server.ServiceName
-				}
 				if err = initLogger(); err != nil {
 					logs.Error(context.TODO(), "init logger failed, err:%v", err)
 					return

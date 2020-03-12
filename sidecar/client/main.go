@@ -20,8 +20,8 @@ func handle_fn (ctx context.Context) (err error) {
 		logs.Error(ctx, "connect %s failed, err:%v", address, err)
 		return errClientConnFailed
 	}
-	fmt.Println("handle done")
 	rpcMeta.Conn = conn
+	rpcMeta.RetCtx = ctx
 	return
 }
 
@@ -31,8 +31,8 @@ func Director(ctx context.Context, serviceAndMethodName string) (context.Context
 	if ok {
 		ctx = initMeta(ctx, serviceName, mthName)
 		if err := handle(ctx); err == nil{
-			metadata := getMeta(ctx)
-			return ctx, metadata.Conn, nil
+			metadata_ := getMeta(ctx)
+			return metadata_.RetCtx, metadata_.Conn, nil
 		}
 	}
 	return nil, nil, grpc.Errorf(codes.Unimplemented, "Unknown method")

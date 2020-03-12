@@ -8,7 +8,6 @@ type ServerT struct {
 	SidecarPort int
 	Port        int
 	Prometheus  prometheusConf
-	ServiceName string
 	LimitQps    int
 	// custom
 	Limiter *rate.Limiter `yaml:"-"`

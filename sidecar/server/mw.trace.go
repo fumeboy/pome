@@ -18,25 +18,25 @@ func tracerMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
 		//从ctx获取grpc的metadata
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
-			//没有的话,新建一个
+			//没有的话,	新建一个
 			md = metadata.Pairs()
+		} else{
+			//md = md.Copy()
 		}
 
 		tracer := opentracing.GlobalTracer()
-		parentSpanContext, err := tracer.Extract(opentracing.HTTPHeaders, trace.MetadataTextMap(md))
-		if err != nil && err != opentracing.ErrSpanContextNotFound {
+		parentSpanContext, err := tracer.Extract(opentracing.TextMap, trace.MDReaderWriter{md})
+		if err != nil {
 			logs.Warn(ctx, "trace extract failed, parsing trace information: %v", err)
 		}
-
 		serverMeta := getMeta(ctx)
 		//开始追踪该方法
 		serverSpan := tracer.StartSpan(
 			serverMeta.Method,
+			opentracing.ChildOf(parentSpanContext),
 			ext.RPCServerOption(parentSpanContext),
 			ext.SpanKindRPCServer,
 		)
-
-		serverSpan.SetTag(trace.TraceID, logs.GetTraceId(ctx))
 		ctx = opentracing.ContextWithSpan(ctx, serverSpan)
 		err = next(ctx)
 		//记录错误

@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type MiddlewareFn func(ctx context.Context) (err error)
+type MiddlewareFn func(context.Context) (error)
 
 type Middleware func(MiddlewareFn) MiddlewareFn
 

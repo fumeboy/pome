@@ -6,14 +6,14 @@ import (
 )
 
 func initLogger() (err error) {
-	filename := fmt.Sprintf("%s/%s.log", conf.Log.Path, service_name)
+	filename := fmt.Sprintf("%s/%s.log", conf.Log.Path, conf.NodeName)
 	outputer, err := logs.NewFileOutputer(filename)
 	if err != nil {
 		return
 	}
 
 	level := logs.GetLogLevel(conf.Log.Level)
-	logs.InitLogger(level, conf.Log.ChanSize, service_name)
+	logs.InitLogger(level, conf.Log.ChanSize, conf.NodeName)
 	logs.AddOutputer(outputer)
 
 	if conf.Log.ConsoleLog {

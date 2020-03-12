@@ -15,43 +15,40 @@ import (
 func traceMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
 	return func(ctx context.Context) (err error) {
 		fmt.Println("client's traceMiddleware")
-		tracer := opentracing.GlobalTracer()
 		var parentSpanCtx opentracing.SpanContext
 		if parent := opentracing.SpanFromContext(ctx); parent != nil {
 			parentSpanCtx = parent.Context()
 		}
-
+		tracer := opentracing.GlobalTracer()
 		opts := []opentracing.StartSpanOption{
 			opentracing.ChildOf(parentSpanCtx),
 			ext.SpanKindRPCClient,
-			opentracing.Tag{Key: string(ext.Component), Value: "pome"},
-			opentracing.Tag{Key: trace.TraceID, Value: logs.GetTraceId(ctx)},
 		}
 
 		rpcMeta := getMeta(ctx)
-		clientSpan := tracer.StartSpan(rpcMeta.ServiceName, opts...)
-
+		span := tracer.StartSpan(rpcMeta.Method, opts...)
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			md = metadata.Pairs()
+		}else{
+			//如果对metadata进行修改，那么需要用拷贝的副本进行修改。（FromIncomingContext的注释）
+			//md = md.Copy()
 		}
-
-		if err := tracer.Inject(clientSpan.Context(), opentracing.HTTPHeaders, trace.MetadataTextMap(md)); err != nil {
+		if err := tracer.Inject(span.Context(), opentracing.TextMap, trace.MDReaderWriter{md}); err != nil {
 			logs.Debug(ctx, "grpc_opentracing: failed serializing trace information: %v", err)
 		}
-
 		ctx = metadata.NewOutgoingContext(ctx, md)
-		ctx = metadata.AppendToOutgoingContext(ctx, trace.TraceID, logs.GetTraceId(ctx))
-		ctx = opentracing.ContextWithSpan(ctx, clientSpan)
+		//ctx = metadata.AppendToOutgoingContext(ctx, trace.TraceID, logs.GetTraceId(ctx))
+		//ctx = opentracing.ContextWithSpan(ctx, span)
 
 		err = next(ctx)
 		//记录错误
 		if err != nil {
-			ext.Error.Set(clientSpan, true)
-			clientSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
+			ext.Error.Set(span, true)
+			span.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		}
 
-		clientSpan.Finish()
+		span.Finish()
 		return
 	}
 }
