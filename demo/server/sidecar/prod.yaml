@@ -1,7 +1,7 @@
+node_name: guestbook
 server:
   sidecar_port: 9101
   port: 9100
-  service_name: guestbook
   limit_qps: 50000
   prometheus:
     switch_on: false
@@ -20,6 +20,6 @@ log:
   console_log: true
 trace:
   switch_on: true
-  report_addr: http://127.0.0.1:9411/api/v1/spans
+  report_addr: 127.0.0.1:6831
   sample_type: const
   sample_rate: 1
