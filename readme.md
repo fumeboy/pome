@@ -64,4 +64,4 @@ demo
 
 在 client/sidecar 路径下新建 `logout` 文件夹再执行 ` go build && ./sidecar` (3)
 
-在 client/main 路径下执行  `go build && ./client` (4)
+在 client/main 路径下执行  `go build && ./main` (4)
