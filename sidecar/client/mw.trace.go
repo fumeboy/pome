@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fumeboy/pome/sidecar/middleware"
 	"github.com/fumeboy/pome/sidecar/middleware/trace"
-	"github.com/fumeboy/pome/util/logs"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
@@ -30,16 +29,14 @@ func traceMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			md = metadata.Pairs()
-		}else{
+		} else {
 			//如果对metadata进行修改，那么需要用拷贝的副本进行修改。（FromIncomingContext的注释）
 			//md = md.Copy()
 		}
 		if err := tracer.Inject(span.Context(), opentracing.TextMap, trace.MDReaderWriter{md}); err != nil {
-			logs.Debug(ctx, "grpc_opentracing: failed serializing trace information: %v", err)
+			rpcMeta.Log.Debug("grpc_opentracing: failed serializing trace information: %v", err)
 		}
 		ctx = metadata.NewOutgoingContext(ctx, md)
-		//ctx = metadata.AppendToOutgoingContext(ctx, trace.TraceID, logs.GetTraceId(ctx))
-		//ctx = opentracing.ContextWithSpan(ctx, span)
 
 		err = next(ctx)
 		//记录错误

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/fumeboy/pome/sidecar/middleware/trace"
 
-	"github.com/fumeboy/pome/util/logs"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -22,11 +21,9 @@ func PrepareMiddleware(next MiddlewareFn) MiddlewareFn {
 		}
 
 		if len(traceId) == 0 {
-			traceId = logs.GenTraceId()
+			traceId = trace.GenTraceId()
 		}
-
-		ctx = logs.WithFieldContext(ctx)
-		ctx = logs.WithTraceId(ctx, traceId)
+		ctx = trace.WithTraceId(ctx, traceId)
 		return next(ctx)
 	}
 }

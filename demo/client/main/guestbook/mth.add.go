@@ -2,7 +2,7 @@ package guestbook
 
 import (
 	"context"
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 	"google.golang.org/grpc"
 )
 
@@ -10,7 +10,7 @@ func (this *clientT) Add(ctx context.Context, r *AddRequest) (resp *AddResponse,
 	address := "127.0.0.1:"+ sidecar_port
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
-		logs.Error(ctx, "connect %s failed, err:%v", address, err)
+		llog.Error("connect %s failed, err:%v", address, err)
 		return nil, err
 	}
 

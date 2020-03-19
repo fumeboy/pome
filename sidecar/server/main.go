@@ -6,7 +6,6 @@ import (
 	"github.com/fumeboy/pome/sidecar/conf"
 	"github.com/fumeboy/pome/sidecar/middleware"
 	"github.com/fumeboy/pome/sidecar/proxy"
-	"github.com/fumeboy/pome/util/logs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -18,7 +17,7 @@ func handle_fn(ctx context.Context) (err error) {
 	address := fmt.Sprintf("%s:%d", "127.0.0.1", conf.Server.Port)
 	conn, err := grpc.DialContext(ctx, address, grpc.WithCodec(proxy.Codec()),grpc.WithInsecure())
 	if err != nil {
-		logs.Error(ctx, "connect %s failed, err:%v", address, err)
+		rpcMeta.Log.Error("connect %s failed, err:%v", address, err)
 		return errServerConnFailed
 	}
 	rpcMeta.Conn = conn

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/fumeboy/pome/demo/server/main/guestbook"
 	"github.com/fumeboy/pome/demo/server/main/model"
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -40,7 +40,7 @@ func (this *get) run(ctx context.Context, r *guestbook.GetRequest) (resp *guestb
 	this.msgRead(r)
 	result, err := this.msgExec(ctx)
 	if err != nil {
-		logs.Error(ctx, "get msg failed, err:%v", err)
+		llog.Error("get msg failed, err:%v", err)
 		return
 	}
 	for _, one := range result {

@@ -6,7 +6,6 @@ import (
 	"github.com/fumeboy/pome/sidecar/middleware"
 	"time"
 
-	"github.com/fumeboy/pome/util/logs"
 	"google.golang.org/grpc/status"
 )
 
@@ -15,21 +14,20 @@ func logMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
 		fmt.Println("server's logMiddleware")
 		startTime := time.Now()
 		err = next(ctx)
-		serverMeta := getMeta(ctx)
+		meta := getMeta(ctx)
 		errStatus, _ := status.FromError(err)
 
 		cost := time.Since(startTime).Nanoseconds() / 1000
-		logs.AddField(ctx, "cost_us", cost)
-		logs.AddField(ctx, "method", serverMeta.Method)
+		meta.Log.AddField("cost_us", cost)
+		meta.Log.AddField("method", meta.Method)
 
-		logs.AddField(ctx, "cluster", serverMeta.Cluster)
-		logs.AddField(ctx, "env", serverMeta.Env)
-		logs.AddField(ctx, "server_ip", serverMeta.ServerIP)
-		logs.AddField(ctx, "client_ip", serverMeta.ClientIP)
-		logs.AddField(ctx, "idc", serverMeta.IDC)
-		logs.Access(ctx, "result=%v", errStatus.Code())
+		meta.Log.AddField("cluster", meta.Cluster)
+		meta.Log.AddField("env", meta.Env)
+		meta.Log.AddField("server_ip", meta.ServerIP)
+		meta.Log.AddField("client_ip", meta.ClientIP)
+		meta.Log.AddField("idc", meta.IDC)
+		meta.Log.Access("result=%v", errStatus.Code())
 
 		return
 	}
 }
-

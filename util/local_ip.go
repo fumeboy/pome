@@ -6,7 +6,7 @@ import (
 	"net"
 	"sync/atomic"
 
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 )
 
 var ipAuto atomic.Value
@@ -32,7 +32,7 @@ func GetLocalIP() (ip string, err error) {
 					if ipnet.IP.To4() != nil {
 						ip = ipnet.IP.String()
 						ipAuto.Store(ip)
-						logs.Info(context.TODO(), "local ip:%v", ip)
+						llog.Info(context.TODO(), "local ip:%v", ip)
 						return
 					}
 				}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/fumeboy/pome/registry"
 	"github.com/fumeboy/pome/util"
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 	"github.com/fumeboy/pome/util/tag"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -77,15 +77,15 @@ func init() {
 				Server = conf.Server
 				Client = conf.Client
 				if err = initLogger(); err != nil {
-					logs.Error(context.TODO(), "init logger failed, err:%v", err)
+					llog.Error("init logger failed, err:%v", err)
 					return
 				}
 				if err = initRegister(); err != nil {
-					logs.Error(context.TODO(), "init register failed, err:%v", err)
+					llog.Error("init register failed, err:%v", err)
 					return
 				}
 				if err = initTrace(); err != nil {
-					logs.Error(context.TODO(), "init tracing failed, err:%v", err)
+					llog.Error("init tracing failed, err:%v", err)
 				}
 				if Server != nil {
 					err = Server.init()

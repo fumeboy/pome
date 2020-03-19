@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fumeboy/pome/registry"
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 )
 
 type selectedNodes struct {
@@ -30,7 +30,6 @@ func getSelectedNodes(ctx context.Context) *selectedNodes {
 }
 
 func filterNodes(ctx context.Context, nodes []*registry.Node) []*registry.Node {
-
 	var newNodes []*registry.Node
 	sel := GetSelectedNodes(ctx)
 	if sel == nil {
@@ -41,7 +40,7 @@ func filterNodes(ctx context.Context, nodes []*registry.Node) []*registry.Node {
 		addr := fmt.Sprintf("%s:%d", node.IP, node.Port)
 		_, ok := sel.selectedNodeMap[addr]
 		if ok {
-			logs.Debug(ctx, "addr:%s ok", addr)
+			llog.Debug("addr:%s ok", addr)
 			continue
 		}
 		newNodes = append(newNodes, node)
@@ -55,8 +54,6 @@ func setSelected(ctx context.Context, node *registry.Node) {
 	if sel == nil {
 		return
 	}
-
 	addr := fmt.Sprintf("%s:%d", node.IP, node.Port)
-	logs.Debug(ctx, "filter node:%s", addr)
 	sel.selectedNodeMap[addr] = true
 }

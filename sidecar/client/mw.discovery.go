@@ -6,7 +6,6 @@ import (
 	"github.com/fumeboy/pome/sidecar/middleware"
 
 	"github.com/fumeboy/pome/registry"
-	"github.com/fumeboy/pome/util/logs"
 )
 
 func newDiscoveryMiddleware(discovery registry.Registry) middleware.Middleware {
@@ -21,7 +20,7 @@ func newDiscoveryMiddleware(discovery registry.Registry) middleware.Middleware {
 
 			service, err := discovery.GetService(ctx, rpcMeta.ServiceName)
 			if err != nil {
-				logs.Error(ctx, "discovery service:%s failed, err:%v", rpcMeta.ServiceName, err)
+				rpcMeta.Log.Error("discovery service:%s failed, err:%v", rpcMeta.ServiceName, err)
 				return
 			}
 

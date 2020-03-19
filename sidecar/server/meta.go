@@ -2,15 +2,16 @@ package server
 
 import (
 	"context"
+	"github.com/fumeboy/llog"
 	"google.golang.org/grpc"
 )
 
 type metaT struct {
 	RetCtx context.Context
+	Log llog.CTX
 	ServiceName string
 	Method      string
 	Cluster     string
-	TraceID     string
 	Env         string
 	ServerIP    string
 	ClientIP    string
@@ -28,6 +29,9 @@ func initMeta(ctx context.Context, service, method string) context.Context {
 	meta := &metaT{
 		Method:      method,
 		ServiceName: service,
+		Log: llog.CTX{
+			Fields: []*llog.KeyVal{},
+		},
 	}
 	return context.WithValue(ctx, metaContextKey{}, meta)
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/fumeboy/pome/sidecar/middleware"
 	"github.com/fumeboy/pome/sidecar/middleware/loadbalance"
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 )
 
 func NewLoadBalanceMiddleware(balancer loadbalance.LoadBalance) middleware.Middleware {
@@ -16,7 +16,7 @@ func NewLoadBalanceMiddleware(balancer loadbalance.LoadBalance) middleware.Middl
 			rpcMeta := getMeta(ctx)
 			if len(rpcMeta.AllNodes) == 0 {
 				err = loadbalance.ErrNotHaveServiceInstance
-				logs.Error(ctx, "not have instance")
+				rpcMeta.Log.Error( "not have instance")
 				return
 			}
 			//生成loadbalance的上下文,用来过滤已经选择的节点
@@ -26,7 +26,7 @@ func NewLoadBalanceMiddleware(balancer loadbalance.LoadBalance) middleware.Middl
 				if err != nil {
 					return
 				}
-				logs.Debug(ctx, "select node:%#v", rpcMeta.CurNode)
+				rpcMeta.Log.Debug("select node:%#v", rpcMeta.CurNode)
 				rpcMeta.HistoryNodes = append(rpcMeta.HistoryNodes, rpcMeta.CurNode)
 				if err = next(ctx); err != nil {
 					//连接错误的话，进行重试

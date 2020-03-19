@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"github.com/fumeboy/llog"
 
 	"github.com/fumeboy/pome/registry"
 	"google.golang.org/grpc"
@@ -9,6 +10,7 @@ import (
 
 type metaT struct {
 	RetCtx context.Context
+	Log llog.CTX
 	//调用方名字
 	Caller string
 	//服务提供方
@@ -19,8 +21,6 @@ type metaT struct {
 	CallerCluster string
 	//服务提供方集群
 	ServiceCluster string
-	//TraceID
-	TraceID string
 	//环境
 	Env string
 	//调用方IDC
@@ -52,6 +52,9 @@ func initMeta(ctx context.Context, service, method string) context.Context {
 	meta := &metaT{
 		Method:      method,
 		ServiceName: service,
+		Log: llog.CTX{
+			Fields: []*llog.KeyVal{},
+		},
 	}
 	return context.WithValue(ctx, metaContextKey{}, meta)
 }

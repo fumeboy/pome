@@ -1,14 +1,13 @@
 package trace
 
 import (
-	"context"
 	"encoding/base64"
 	"github.com/uber/jaeger-client-go/config"
 	"strings"
 
 	"fmt"
 
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	"google.golang.org/grpc/metadata"
@@ -66,7 +65,7 @@ func InitTrace(serviceName, reportAddr, sampleType string, rate float64) (err er
 			Param: rate,       // 1=全采样、0=不采样
 		},
 		Reporter: &config.ReporterConfig{
-			LogSpans:           true,
+			llogpans:           true,
 			LocalAgentHostPort: reportAddr,
 		},
 	}
@@ -74,7 +73,7 @@ func InitTrace(serviceName, reportAddr, sampleType string, rate float64) (err er
 		config.Logger(jaeger.StdLogger),
 	)
 	if err != nil {
-		logs.Error(context.TODO(), "ERROR: cannot init Jaeger: %v\n", err)
+		llog.Error("ERROR: cannot init Jaeger: %v\n", err)
 		return
 	}
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fumeboy/pome/sidecar/middleware"
 	"github.com/fumeboy/pome/sidecar/middleware/trace"
-	"github.com/fumeboy/pome/util/logs"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
@@ -25,11 +24,11 @@ func tracerMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
 		}
 
 		tracer := opentracing.GlobalTracer()
+		serverMeta := getMeta(ctx)
 		parentSpanContext, err := tracer.Extract(opentracing.TextMap, trace.MDReaderWriter{md})
 		if err != nil {
-			logs.Warn(ctx, "trace extract failed, parsing trace information: %v", err)
+			serverMeta.Log.Warn("trace extract failed, parsing trace information: %v", err)
 		}
-		serverMeta := getMeta(ctx)
 		//开始追踪该方法
 		serverSpan := tracer.StartSpan(
 			serverMeta.Method,

@@ -3,7 +3,7 @@ package conf
 import (
 	"context"
 	"github.com/fumeboy/pome/registry"
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 )
 
 func initRegister() (err error) {
@@ -20,7 +20,7 @@ func initRegister() (err error) {
 		registry.WithHeartBeat(conf.Register.HeartBeat),
 	)
 	if err != nil {
-		logs.Error(ctx, "init registry failed, err:%v", err)
+		llog.Error("init registry failed, err:%v", err)
 		return
 	}
 

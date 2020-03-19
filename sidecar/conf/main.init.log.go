@@ -2,22 +2,22 @@ package conf
 
 import (
 	"fmt"
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 )
 
 func initLogger() (err error) {
 	filename := fmt.Sprintf("%s/%s.log", conf.Log.Path, conf.NodeName)
-	outputer, err := logs.NewFileOutputer(filename)
+	outputer, err := llog.NewFileOutputer(filename)
 	if err != nil {
 		return
 	}
 
-	level := logs.GetLogLevel(conf.Log.Level)
-	logs.InitLogger(level, conf.Log.ChanSize, conf.NodeName)
-	logs.AddOutputer(outputer)
+	level := llog.GetLogLevel(conf.Log.Level)
+	llog.InitLogger(level, conf.Log.ChanSize, &llog.KeyVal{"serviceName", conf.NodeName})
+	llog.AddOutputer(outputer)
 
 	if conf.Log.ConsoleLog {
-		logs.AddOutputer(logs.NewConsoleOutputer())
+		llog.AddOutputer(llog.NewConsoleOutputer())
 	}
 	return
 }

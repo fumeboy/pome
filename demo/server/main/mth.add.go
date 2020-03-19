@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/fumeboy/pome/demo/server/main/guestbook"
 	"github.com/fumeboy/pome/demo/server/main/model"
-	"github.com/fumeboy/pome/util/logs"
+	"github.com/fumeboy/llog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"time"
@@ -47,7 +47,7 @@ func (this *add) run(ctx context.Context, r *guestbook.AddRequest) (
 	this.msgRead(r)
 	err = this.msgExec(ctx)
 	if err != nil {
-		logs.Error(ctx, "add msg failed, err:%v", err)
+		llog.Error("add msg failed, err:%v", err)
 		return
 	}
 	return
