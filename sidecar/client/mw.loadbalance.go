@@ -2,42 +2,40 @@ package client
 
 import (
 	"context"
-	"fmt"
-	"github.com/fumeboy/pome/sidecar/middleware"
-	"github.com/fumeboy/pome/sidecar/middleware/loadbalance"
 	"github.com/fumeboy/llog"
+	"github.com/fumeboy/pome/sidecar/client/loadbalance"
+	"github.com/fumeboy/pome/sidecar/conf"
 )
-
-func NewLoadBalanceMiddleware(balancer loadbalance.LoadBalance) middleware.Middleware {
-	return func(next middleware.MiddlewareFn) middleware.MiddlewareFn {
-		return func(ctx context.Context) (err error) {
-			fmt.Println("client's loadBalanceMiddleware")
-			//从ctx获取rpc的metadata
-			rpcMeta := getMeta(ctx)
-			if len(rpcMeta.AllNodes) == 0 {
-				err = loadbalance.ErrNotHaveServiceInstance
-				rpcMeta.Log.Error( "not have instance")
-				return
-			}
-			//生成loadbalance的上下文,用来过滤已经选择的节点
-			ctx = loadbalance.WithBalanceContext(ctx)
-			for {
-				rpcMeta.CurNode, err = balancer.Select(ctx, rpcMeta.AllNodes)
-				if err != nil {
-					return
-				}
-				rpcMeta.Log.Debug("select node:%#v", rpcMeta.CurNode)
-				rpcMeta.HistoryNodes = append(rpcMeta.HistoryNodes, rpcMeta.CurNode)
-				if err = next(ctx); err != nil {
-					//连接错误的话，进行重试
-					if isConnFailed(err) {
-						continue
-					}
-					return
-				}
-				break
-			}
+func mw_loadbalance(balancer loadbalance.LoadBalance,next mw_fn) mw_fn {
+	return func(ctx context.Context, ctx2 *ctxT) (err error) {
+		service, err := conf.Register.GetService(ctx, ctx2.ServiceName)
+		if err != nil {
+			llog.Error("discovery service:%s failed, err:%v", ctx2.ServiceName, err)
+			return err
+		}
+		nodes := service.Nodes
+		if len(nodes) == 0 {
+			err = loadbalance.ErrNotHaveServiceInstance
+			llog.Error( "not have instance")
 			return
 		}
+		//生成loadbalance的上下文,用来过滤已经选择的节点
+		lbctx := loadbalance.NewBalanceContext()
+		for {
+			currentNode, err := balancer.Select(lbctx, nodes)
+			if err != nil {
+				return
+			}
+			llog.Debug("select node:%#v", currentNode)
+			if err = next(ctx,ctx2); err != nil {
+				//连接错误的话，进行重试
+				if isConnFailed(err) {
+					continue
+				}
+				return
+			}
+			break
+		}
+		return
 	}
 }

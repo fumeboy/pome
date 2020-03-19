@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/fumeboy/pome/sidecar/middleware"
 	"github.com/fumeboy/pome/sidecar/middleware/trace"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -11,8 +10,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func tracerMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
-	return func(ctx context.Context) (err error) {
+func mw_trace(next mw_fn) mw_fn {
+	return func(ctx context.Context, ctx2 *ctxT) (err error) {
 		fmt.Println("server's traceMiddleware")
 		//从ctx获取grpc的metadata
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -24,20 +23,19 @@ func tracerMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
 		}
 
 		tracer := opentracing.GlobalTracer()
-		serverMeta := getMeta(ctx)
 		parentSpanContext, err := tracer.Extract(opentracing.TextMap, trace.MDReaderWriter{md})
 		if err != nil {
-			serverMeta.Log.Warn("trace extract failed, parsing trace information: %v", err)
+			ctx2.Log.Warn("trace extract failed, parsing trace information: %v", err)
 		}
 		//开始追踪该方法
 		serverSpan := tracer.StartSpan(
-			serverMeta.Method,
+			ctx2.Method,
 			opentracing.ChildOf(parentSpanContext),
 			ext.RPCServerOption(parentSpanContext),
 			ext.SpanKindRPCServer,
 		)
 		ctx = opentracing.ContextWithSpan(ctx, serverSpan)
-		err = next(ctx)
+		err = next(ctx,ctx2)
 		//记录错误
 		if err != nil {
 			ext.Error.Set(serverSpan, true)

@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"github.com/fumeboy/pome/sidecar/middleware/loadbalance"
+	"github.com/fumeboy/pome/sidecar/client/loadbalance"
 	"golang.org/x/time/rate"
 	"time"
 )

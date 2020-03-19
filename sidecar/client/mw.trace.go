@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/fumeboy/pome/sidecar/middleware"
+	"github.com/fumeboy/llog"
 	"github.com/fumeboy/pome/sidecar/middleware/trace"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func traceMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
-	return func(ctx context.Context) (err error) {
+func mw_trace(next mw_fn)mw_fn{
+	return func(ctx context.Context, ctx2 *ctxT) (err error) {
 		fmt.Println("client's traceMiddleware")
 		var parentSpanCtx opentracing.SpanContext
 		if parent := opentracing.SpanFromContext(ctx); parent != nil {
@@ -23,9 +23,7 @@ func traceMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
 			opentracing.ChildOf(parentSpanCtx),
 			ext.SpanKindRPCClient,
 		}
-
-		rpcMeta := getMeta(ctx)
-		span := tracer.StartSpan(rpcMeta.Method, opts...)
+		span := tracer.StartSpan(ctx2.Method, opts...)
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			md = metadata.Pairs()
@@ -34,11 +32,11 @@ func traceMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
 			//md = md.Copy()
 		}
 		if err := tracer.Inject(span.Context(), opentracing.TextMap, trace.MDReaderWriter{md}); err != nil {
-			rpcMeta.Log.Debug("grpc_opentracing: failed serializing trace information: %v", err)
+			llog.Debug("grpc_opentracing: failed serializing trace information: %v", err)
 		}
 		ctx = metadata.NewOutgoingContext(ctx, md)
 
-		err = next(ctx)
+		err = next(ctx,ctx2)
 		//记录错误
 		if err != nil {
 			ext.Error.Set(span, true)

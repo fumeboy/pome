@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/fumeboy/pome/sidecar/middleware"
 	"github.com/fumeboy/pome/sidecar/middleware/prometheus"
 	"time"
 )
@@ -12,18 +11,17 @@ var (
 	defaultMetrics = prometheus.NewClientMetrics()
 )
 
-func prometheusMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
-	return func(ctx context.Context) (err error) {
+func mw_prom(next mw_fn) mw_fn {
+	return func(ctx context.Context, ctx2 *ctxT) (err error) {
 		fmt.Println("client's promMiddleware")
-		rpcMeta := getMeta(ctx)
-		defaultMetrics.IncrRequest(ctx, rpcMeta.ServiceName, rpcMeta.Method)
+		defaultMetrics.IncrRequest(ctx, ctx2.ServiceName, ctx2.Method)
 
 		startTime := time.Now()
-		err = next(ctx)
+		err = next(ctx, ctx2)
 
-		defaultMetrics.IncrCode(ctx, rpcMeta.ServiceName, rpcMeta.Method, err)
-		defaultMetrics.Latency(ctx, rpcMeta.ServiceName,
-			rpcMeta.Method, time.Since(startTime).Nanoseconds()/1000)
+		defaultMetrics.IncrCode(ctx, ctx2.ServiceName, ctx2.Method, err)
+		defaultMetrics.Latency(ctx, ctx2.ServiceName,
+			ctx2.Method, time.Since(startTime).Nanoseconds()/1000)
 		return
 	}
 }

@@ -3,30 +3,23 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/fumeboy/pome/sidecar/middleware"
 	"time"
 
 	"google.golang.org/grpc/status"
 )
 
-func logMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
-	return func(ctx context.Context) (err error) {
+func mw_log(next mw_fn) mw_fn {
+	return func(ctx context.Context, ctx2 *ctxT) (err error) {
 		fmt.Println("server's logMiddleware")
 		startTime := time.Now()
-		err = next(ctx)
-		meta := getMeta(ctx)
+		err = next(ctx, ctx2)
 		errStatus, _ := status.FromError(err)
 
 		cost := time.Since(startTime).Nanoseconds() / 1000
-		meta.Log.AddField("cost_us", cost)
-		meta.Log.AddField("method", meta.Method)
+		ctx2.Log.AddField("cost_us", cost)
+		ctx2.Log.AddField("method", ctx2.Method)
 
-		meta.Log.AddField("cluster", meta.Cluster)
-		meta.Log.AddField("env", meta.Env)
-		meta.Log.AddField("server_ip", meta.ServerIP)
-		meta.Log.AddField("client_ip", meta.ClientIP)
-		meta.Log.AddField("idc", meta.IDC)
-		meta.Log.Access("result=%v", errStatus.Code())
+		ctx2.Log.Access("result=%v", errStatus.Code())
 
 		return
 	}

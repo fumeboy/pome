@@ -197,8 +197,7 @@ func (e *etcd_registryT) servicePath(name string) string {
 	return path.Join(e.options.RegistryPath, name)
 }
 
-func (e *etcd_registryT) getServiceFromCache(ctx context.Context,
-	name string) (service *registry.Service, ok bool) {
+func (e *etcd_registryT) getServiceFromCache(ctx context.Context, name string) (service *registry.Service, ok bool) {
 
 	allServiceInfo := e.value.Load().(*allServiceInfo)
 	//一般情况下，都会从缓存中读取

@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"context"
 	"fmt"
 	"github.com/fumeboy/pome/registry"
 	"github.com/fumeboy/pome/util"

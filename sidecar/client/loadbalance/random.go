@@ -1,7 +1,6 @@
 package loadbalance
 
 import (
-	"context"
 	"math/rand"
 
 	"github.com/fumeboy/pome/registry"
@@ -21,7 +20,7 @@ func (r *randomBalance) Name() string {
 	return r.name
 }
 
-func (r *randomBalance) Select(ctx context.Context, nodes []*registry.Node) (node *registry.Node, err error) {
+func (r *randomBalance) Select(ctx *lbCtx, nodes []*registry.Node) (node *registry.Node, err error) {
 
 	if len(nodes) == 0 {
 		err = errNotHaveServiceInstance

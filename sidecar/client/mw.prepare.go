@@ -1,4 +1,4 @@
-package middleware
+package client
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func PrepareMiddleware(next MiddlewareFn) MiddlewareFn {
-	return func(ctx context.Context) (err error) {
+func prepare(next mw_fn) mw_fn {
+	return func(ctx context.Context, ctx2 *ctxT) (err error) {
 		//处理traceId
 		var traceId string
 		//从ctx获取grpc的metadata
@@ -23,7 +23,7 @@ func PrepareMiddleware(next MiddlewareFn) MiddlewareFn {
 		if len(traceId) == 0 {
 			traceId = trace.GenTraceId()
 		}
-		ctx = trace.WithTraceId(ctx, traceId)
-		return next(ctx)
+		ctx2.TraceId = traceId
+		return next(ctx,ctx2)
 	}
 }

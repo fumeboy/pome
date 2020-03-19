@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/fumeboy/pome/sidecar/middleware"
 	"github.com/fumeboy/pome/sidecar/middleware/prometheus"
 	"time"
 )
@@ -12,18 +11,17 @@ var (
 	defaultMetrics = prometheus.NewServerMetrics()
 )
 
-func prometheusMiddleware(next middleware.MiddlewareFn) middleware.MiddlewareFn {
-	return func(ctx context.Context) (err error) {
+func mw_prom(next mw_fn) mw_fn {
+	return func(ctx context.Context,ctx2 *ctxT) (err error) {
 		fmt.Println("server's promMiddleware")
-		serverMeta := getMeta(ctx)
-		defaultMetrics.IncrRequest(ctx, serverMeta.ServiceName, serverMeta.Method)
+		defaultMetrics.IncrRequest(ctx, ctx2.ServiceName, ctx2.Method)
 
 		startTime := time.Now()
-		err = next(ctx)
+		err = next(ctx,ctx2)
 
-		defaultMetrics.IncrCode(ctx, serverMeta.ServiceName, serverMeta.Method, err)
-		defaultMetrics.Latency(ctx, serverMeta.ServiceName,
-			serverMeta.Method, time.Since(startTime).Nanoseconds()/1000)
+		defaultMetrics.IncrCode(ctx, ctx2.ServiceName, ctx2.Method, err)
+		defaultMetrics.Latency(ctx, ctx2.ServiceName,
+			ctx2.Method, time.Since(startTime).Nanoseconds()/1000)
 		return
 	}
 }
