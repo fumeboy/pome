@@ -1,48 +1,21 @@
 # pome
 
-为了学习微服务而做的框架
-
-虽然说是框架但其实只有 服务发现 + gRPC 这两个单元
-
-为了微服务的编写可以不局限于单一语言，将中间件封装在了 sidecar 中，做成了 service mesh 的样子
-
-请求过程是这样的：
-
-```text
-client -> sidecar_c -> sidecar_s -> server
-```
-
-支持同步和异步两种通信方式，下一步计划是：如果异步失败（消息队列服务端挂了）可以变为同步。
-
-RPC 单元填入了这些中间件： 
-
-- 负载均衡
-- 限流
-- 熔断
-- 系统监控（prometheus & metrics）
-- 链路追踪（jaeger）
-
-都是从其他框架抄过来的，有些具体的用法暂时也没搞懂（比如 链路追踪 和 系统监控 和 熔断
+pome 本身只是service mesh 中的 sidecar，它做了很多事情，以至于使用 sidecar 的主应用可以尽可能简单。
 
 ## 运行 demo
 
 ### 准备：
 
-protoc （https://www.jianshu.com/p/00be93ed230c）
-
-protoc-gen-go (是上面的插件，用来为go项目生成程序文本)
-
-// 其实也可以不准备上面两者（只有当修改了 proto 文件后，才有需要重新生成 pb.go 文件）
-
 docker & docker-compose
 
 ### 编译 & 运行
 
-demo 有三个文件夹
+/demo 有三个文件夹
 
 ```text
 demo
   | - build
+      | - docker-compose.yml
   | - client
       | - main
       | - sidecar
@@ -54,11 +27,9 @@ demo
 // 其中，client/sidecar 和 server/sidecar 其实是同一个程序（但是yaml配置文件不同！），本来应该用 docker 包装它，但这里为了方便没有这样做
 ```
 
-其中 client 和 server 都是 main 包
-
 启动 docker 容器后： (1)
 
-（以下启动顺序不能改变
+（以下启动顺序不能改变，因为服务要先注册才能被发现
 
 在 server/main 路径下执行 ` go build && ./main` (2)
 
@@ -69,31 +40,46 @@ demo
 在 client/main 路径下执行  `go build && ./main` (5)
 
 
-## 蓝图
+## 结构说明
 
-TODO 定制 protoc 插件
+pome/main.go RUN() 是 sidecar 程序入口。
 
-设计规则：模块之间的调用关系必须是单向的
+### 调用关系：
+```text
+entry
+ | - conf   // 加载配置文件
+ | - client // 启动 client (单独的 goroutine)
+ | - server // 启动 server (单独的 goroutine)
 
-### 业务模块：
+client
+ | - conf        // 读取配置
+ | - prometheus
+ | - trace       // 链路跟踪
+ | - registry    // 服务发现
+ | - proxy       // grpc代理 
+ | - mq          // 使用 mq 进行异步请求
 
-- 表单验证码
-- 邮局
-- 短信
-- CAS
-- 通知
-
-### 管理系统：
-
-- 日志模块（通过消息队列写日志不知道是否可行）
-- 配置中心
-  - 新服务上线时需要知道像数据库这样的周边服务的端口在哪 
-- 自动部署
+server
+ | - conf        // 读取配置
+ | - mq          // 消费异步请求产生的数据（单独的 goroutine ）
+ | - proxy       // grpc代理 （单独的 goroutine）
+ | - prometheus
+ | - trace
+ | - registry    // 服务注册
 
 
-### 其他
+```
 
-至今不知道 K8s 是啥
+### 设计层面
 
-管理系统的实现目前暂且不考虑，没这个能力
- 
+#### 1. 管理层
+
+服务注册中心 、（配置中心）、（系统监控）、（日志中心）
+
+#### 2. 通信层
+
+两个角色，两种通信
+
+服务端、客户端，同步、异步
+
+RPC 封装，MQ客户端封装
