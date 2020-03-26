@@ -1,41 +1,36 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"github.com/fumeboy/pome/sidecar/conf"
 	"github.com/fumeboy/pome/sidecar/proxy"
+	"github.com/fumeboy/pome/sidecar/server/async"
+	syncH "github.com/fumeboy/pome/sidecar/server/sync"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
+	"net"
+	"sync"
 )
 
-var handle = prepare(
-	mw_log(
-		mw_prom(
-			mw_rate_limit(
-				conf.Server.Limiter,
-				mw_trace(
-					inner)))))
-
-func inner(ctx context.Context, ctx2 *ctxT) (err error) {
-	address := fmt.Sprintf("%s:%d", "127.0.0.1", conf.Server.Port)
-	conn, err := grpc.DialContext(ctx, address, grpc.WithCodec(proxy.Codec()), grpc.WithInsecure())
-	if err != nil {
-		ctx2.Log.Error("connect %s failed, err:%v", address, err)
-		return errServerConnFailed
-	}
-	ctx2.Conn = conn
-	ctx2.RetCtx = ctx
-	return
-}
-
-func Director(ctx context.Context, serviceAndMethodName string) (context.Context, *grpc.ClientConn, error) {
-	serviceName, mthName, ok := proxy.ReadNames(serviceAndMethodName)
-	if ok {
-		ctx2 := init_mw_ctx(serviceName, mthName)
-		if err := handle(ctx, ctx2); err == nil {
-			return ctx2.RetCtx, ctx2.Conn, nil
+func Init(){
+	var wg = &sync.WaitGroup{}
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		sidecar := grpc.NewServer(
+			grpc.CustomCodec(proxy.Codec()),
+			grpc.UnknownServiceHandler(proxy.ProxyHandler(syncH.Director(),nil)))
+		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", conf.Server.SidecarPort))
+		if err != nil {
+			panic("client launch failed")
 		}
+		sidecar.Serve(lis)
+		wg.Done()
+	}(wg)
+	if conf.Kafka.SwitchOn {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup) {
+			async.InitConsumer()
+			wg.Done()
+		}(wg)
 	}
-	return nil, nil, grpc.Errorf(codes.Unimplemented, "Unknown method")
+	wg.Wait()
 }

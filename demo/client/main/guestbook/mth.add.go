@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/fumeboy/llog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 func (this *clientT) Add(ctx context.Context, r *AddRequest) (resp *AddResponse, err error) {
@@ -18,6 +19,9 @@ func (this *clientT) Add(ctx context.Context, r *AddRequest) (resp *AddResponse,
 
 	req := r
 	client := NewGuestBookServiceClient(conn)
+	ctx = metadata.NewOutgoingContext(ctx, map[string][]string{
+		"pome-ifasync":{"1"},
+	})
 	resp, err = client.Add(ctx, req)
 	return
 }

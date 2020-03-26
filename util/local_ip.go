@@ -1,7 +1,6 @@
 package util
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"sync/atomic"
@@ -32,7 +31,7 @@ func GetLocalIP() (ip string, err error) {
 					if ipnet.IP.To4() != nil {
 						ip = ipnet.IP.String()
 						ipAuto.Store(ip)
-						llog.Info(context.TODO(), "local ip:%v", ip)
+						llog.Info("local ip:%v", ip)
 						return
 					}
 				}

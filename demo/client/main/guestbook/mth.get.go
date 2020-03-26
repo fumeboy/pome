@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/fumeboy/llog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 const mth_get_name = "get"
@@ -20,6 +21,8 @@ func (this *clientT) Get(ctx context.Context, r*GetRequest)(resp*GetResponse, er
 
 	req := r
 	client := NewGuestBookServiceClient(conn)
+	ctx = metadata.NewOutgoingContext(ctx, map[string][]string{
+	})
 	resp, err = client.Get(ctx, req)
 	return
 }

@@ -17,7 +17,7 @@ func Codec() grpc.Codec {
 // CodecWithParent returns a proxying grpc.Codec with a user provided codec as parent.
 //
 // This codec is *crucial* to the functioning of the proxy. It allows the proxy server to be oblivious
-// to the schema of the forwarded messages. It basically treats a gRPC message frame as raw bytes.
+// to the schema of the forwarded messages. It basically treats a gRPC message Frame as raw bytes.
 // However, if the server handler, or the client caller are not proxy-internal functions it will fall back
 // to trying to decode the message using a fallback codec.
 func CodecWithParent(fallback grpc.Codec) grpc.Codec {
@@ -28,25 +28,25 @@ type rawCodec struct {
 	parentCodec grpc.Codec
 }
 
-type frame struct {
-	payload []byte
+type Frame struct {
+	Payload []byte
 }
 
 func (c *rawCodec) Marshal(v interface{}) ([]byte, error) {
-	out, ok := v.(*frame)
+	out, ok := v.(*Frame)
 	if !ok {
 		return c.parentCodec.Marshal(v)
 	}
-	return out.payload, nil
+	return out.Payload, nil
 
 }
 
 func (c *rawCodec) Unmarshal(data []byte, v interface{}) error {
-	dst, ok := v.(*frame)
+	dst, ok := v.(*Frame)
 	if !ok {
 		return c.parentCodec.Unmarshal(data, v)
 	}
-	dst.payload = data
+	dst.Payload = data
 	return nil
 }
 

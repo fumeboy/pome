@@ -25,3 +25,45 @@ services:
       - "16686:16686"
       - "14268:14268"
       - "9411:9411"
+  zookeeper:
+    image: wurstmeister/zookeeper
+    restart: always
+    ports:
+      - 2181:2181
+    container_name: zookeeper
+  kafka:
+    image: wurstmeister/kafka
+    restart: always
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CREATE_TOPICS: "test:1:1" #表示容器启动时会创建名为"test"的主题，并且partition等于1，副本为1
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    container_name: kafka
+#  kafka-manager:
+#    image: sheepkiller/kafka-manager
+#    links:
+#      - zookeeper:zookeeper
+#      - kafka:kafka_1
+#    environment:
+#      ZK_HOSTS: zookeeper:2181
+##      APPLICATION_SECRET: "letmein"
+#    ports:
+#      - "39000:9000"
+#    expose:
+#      - "9000"
+#  kafka_visuals:
+#    image: kbhargava/kafka-visuals
+#    depends_on:
+#      - zookeeper
+#      - kafka
+#    environment:
+#      zookeeper: zookeeper:2181
+#      kafka: kafka:9092

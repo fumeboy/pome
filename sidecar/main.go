@@ -12,11 +12,17 @@ func main(){
 	var wg = &sync.WaitGroup{}
 	if conf.Client.SwitchOn{
 		wg.Add(1)
-		go client.Init()
+		go func() {
+			client.Init()
+			wg.Done()
+		}()
 	}
 	if conf.Server.SwitchOn{
 		wg.Add(1)
-		go server.Init()
+		go func() {
+			server.Init()
+			wg.Done()
+		}()
 	}
 	wg.Wait()
 }
