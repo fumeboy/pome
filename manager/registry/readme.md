@@ -29,8 +29,12 @@ pluginMgr
 | - Registry
 | - Registry (Plugin instance)
 | - Registry
-    | - Service
-    | - Service
-    | - Service
+    | - Service1
+    | - Service2
+    | - Service3
+        | - Method
+        | - Method
+        | - Method // client3.Call(method.Name)
 ```
+
 

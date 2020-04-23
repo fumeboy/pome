@@ -1,7 +1,0 @@
-syntax = "proto3";
-package mq;
-
-message MqMsg {
-  string method = 1;
-  bytes body = 2;
-}

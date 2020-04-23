@@ -243,7 +243,9 @@ func init() {
 	proto.RegisterType((*GetResponse)(nil), "guestbook.GetResponse")
 }
 
-func init() { proto.RegisterFile("guestbook.proto", fileDescriptor_fbda7dd58e0f267b) }
+func init() {
+	proto.RegisterFile("guestbook.proto", fileDescriptor_fbda7dd58e0f267b)
+}
 
 var fileDescriptor_fbda7dd58e0f267b = []byte{
 	// 255 bytes of a gzipped FileDescriptorProto
@@ -267,11 +269,11 @@ var fileDescriptor_fbda7dd58e0f267b = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // GuestBookServiceClient is the client API for GuestBookService service.
 //
@@ -284,16 +286,16 @@ type GuestBookServiceClient interface {
 }
 
 type guestBookServiceClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewGuestBookServiceClient(cc *grpc.ClientConn) GuestBookServiceClient {
+func NewGuestBookServiceClient(cc grpc.ClientConnInterface) GuestBookServiceClient {
 	return &guestBookServiceClient{cc}
 }
 
 func (c *guestBookServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
 	out := new(AddResponse)
-	err := c.cc.Invoke(ctx, "guestbook/add", in, out, opts...)
+	err := c.cc.Invoke(ctx, "guestbook.GuestBookService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +304,7 @@ func (c *guestBookServiceClient) Add(ctx context.Context, in *AddRequest, opts .
 
 func (c *guestBookServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "guestbook/get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "guestbook.GuestBookService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +344,7 @@ func _GuestBookService_Add_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "guestbook/add",
+		FullMethod: "guestbook.GuestBookService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuestBookServiceServer).Add(ctx, req.(*AddRequest))
@@ -360,7 +362,7 @@ func _GuestBookService_Get_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "guestbook/get",
+		FullMethod: "guestbook.GuestBookService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuestBookServiceServer).Get(ctx, req.(*GetRequest))
@@ -369,15 +371,15 @@ func _GuestBookService_Get_Handler(srv interface{}, ctx context.Context, dec fun
 }
 
 var _GuestBookService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "guestbook",
+	ServiceName: "guestbook.GuestBookService",
 	HandlerType: (*GuestBookServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "add",
+			MethodName: "Add",
 			Handler:    _GuestBookService_Add_Handler,
 		},
 		{
-			MethodName: "get",
+			MethodName: "Get",
 			Handler:    _GuestBookService_Get_Handler,
 		},
 	},

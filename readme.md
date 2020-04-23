@@ -78,8 +78,30 @@ server
 
 #### 2. 通信层
 
-两个角色，两种通信
-
 服务端、客户端，同步、异步
 
 RPC 封装，MQ客户端封装
+
+### 3. 角色
+
+client、server、node(node_manager)
+
+```
+client --- sidecarA ------sidecarB ---- server
+               \        /
+                \      /
+                 \    /
+                   mq
+```
+
+sidecarA:
+
+grpcProxySender / mqProducer
+
+sidecarB:
+
+grpcProxyRecver / mqConsumer
+
+node:
+
+grpcServer / grpcClient / mqProducer / mqConsumer
