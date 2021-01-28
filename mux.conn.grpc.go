@@ -1,0 +1,69 @@
+package main
+
+import (
+	"context"
+	"google.golang.org/grpc/v2"
+	"google.golang.org/grpc/v2/connectivity"
+	"google.golang.org/grpc/v2/keepalive"
+	"sync"
+	"time"
+)
+
+type configConnDial struct {
+	KeepAlive        time.Duration
+	KeepAliveTimeout time.Duration
+	DialTimeOut      time.Duration
+}
+
+type cNode node
+
+type NodePartConn struct {
+	conn  *grpc.ClientConn
+	cLock sync.Mutex
+}
+
+func (n *cNode) Conn(ctx context.Context) (*grpc.ClientConn, error) {
+	if n.conn != nil && n.checkState() {
+		return n.conn, nil
+	}
+	n.cLock.Lock()
+	defer n.cLock.Unlock()
+	if n.conn != nil && n.checkState() {
+		return n.conn, nil
+	}
+	//close old conn
+	if n.conn != nil {
+		n.conn.Close()
+	}
+	// new c
+	conn, err := grpc.DialContext(
+		ctx,
+		n.addr,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:    CONFIG.configConnDial.KeepAlive,
+			Timeout: CONFIG.configConnDial.KeepAliveTimeout,
+		}))
+	if err != nil {
+		return nil, err
+	}
+	n.conn = conn
+	return conn, nil
+}
+
+func (n *cNode) checkState() bool {
+	switch n.conn.GetState() {
+	case connectivity.TransientFailure, connectivity.Shutdown:
+		return false
+	}
+	return true
+}
+
+func (n *cNode) close() {
+	n.cLock.Lock()
+	if n.conn != nil {
+		n.conn.Close()
+	}
+	n.cLock.Unlock()
+}

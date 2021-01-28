@@ -1,4 +1,2 @@
-#!/usr/bin/env bash
-go build -o main
-mv ./main ./build/app/main
-docker build -t pome ./build/
+go build
+docker build -t pome:v2 .

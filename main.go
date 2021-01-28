@@ -1,34 +1,46 @@
 package main
 
 import (
-	"fmt"
-	_ "github.com/fumeboy/pome/manager/registry/etcd"
-	"github.com/fumeboy/pome/settings"
-	"sync"
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
 )
-var wg *sync.WaitGroup
-func main() {
-	fmt.Println("start")
-	wg = &sync.WaitGroup{}
-	var err error
-	settings.Init()
-	if err = init_logger(); err != nil {
-		panic("conf log")
+
+type App struct {
+	discoverer     *discoverer
+	local cNode
+}
+
+type node struct {
+	id int64
+	addr string
+	NodePartLoadBalance
+	NodePartConn
+}
+
+func IPaddress() string {
+	return ""
+}
+
+func (n *node) init(id int64, addr string) *node{
+	n.id = id
+	n.addr = addr
+	return n
+}
+
+var P = App{}
+var rootContext, rootContextCancel = context.WithCancel(context.Background())
+var nodeContext, nodeContextCancel = context.WithCancel(rootContext)
+
+func main(){
+	go ExecUnitEtcd(rootContext)
+	go ExecUnitProxy(rootContext)
+
+	c := make(chan os.Signal)
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	for _ = range c{
+		rootContextCancel()
+		os.Exit(0)
 	}
-	if err = init_registry(); err != nil {
-		panic("conf register")
-	}
-	if err = init_trace(); err != nil {
-		panic("conf trace")
-	}
-	if err = init_server_proxy(); err != nil {
-		panic("conf server")
-	}
-	if err = init_client_proxy(); err != nil {
-		panic("conf client")
-	}
-	if err = init_kafka(); err != nil {
-		panic("conf kafka")
-	}
-	wg.Wait()
 }
