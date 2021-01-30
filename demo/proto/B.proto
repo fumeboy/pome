@@ -1,0 +1,14 @@
+syntax = "proto3";
+package proto;
+
+message ServiceBbDoRequest{
+  string str = 1;
+}
+
+message ServiceBbDoResponse{
+  string new_str = 1;
+}
+
+service ServiceBb {
+  rpc Do(ServiceBbDoRequest) returns (ServiceBbDoResponse){}
+}

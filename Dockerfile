@@ -1,5 +1,4 @@
 FROM alpine:3.5
 
-COPY ./pome ./pome
-
-RUN ./pome
+RUN mkdir /pome
+COPY ./pome /pome/sidecar

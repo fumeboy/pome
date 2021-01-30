@@ -1,0 +1,14 @@
+syntax = "proto3";
+package proto;
+
+message ServiceAaDoRequest{
+  int32 num = 1;
+}
+
+message ServiceAaDoResponse{
+  int32 new_num = 1;
+}
+
+service ServiceAa {
+  rpc Do(ServiceAaDoRequest) returns (ServiceAaDoResponse){}
+}

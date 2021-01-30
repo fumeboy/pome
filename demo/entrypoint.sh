@@ -1,0 +1,2 @@
+/pome/sidecar &
+/pome/service

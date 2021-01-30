@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/binary"
+	"fmt"
 	"go.etcd.io/etcd/clientv3"
+	"pome/define"
 	"sync"
 	"time"
 )
@@ -28,45 +29,33 @@ import (
  		一个是 service 节点所在的 pod 宕机，一个是 etcd 集群下线。
 */
 
-type configEtcd = clientv3.Config
-
-func ExecUnitEtcd(ctx context.Context) {
+func ExecUnitEtcd() {
 	u := &etcdClient{}
-	u.init(ctx, CONFIG.configEtcd.Endpoints, CONFIG.configEtcd.DialTimeout)
 	P.discoverer = (*discoverer)(u)
+	(*etcdClient)(u).init(nodeActiveContext)
+	(*registry)(u).init(nodeActiveContext)
+	(*discoverer)(u).init(nodeActiveContext)
 	for {
-		(*registry)(u).init(ctx)
-		(*discoverer)(u).init(ctx)
-		nodeContext, nodeContextCancel = context.WithCancel(ctx)
-		go (*discoverer)(u).keepSync(nodeContext)
-		u.KeepAlive(ctx)
-		nodeContextCancel()
-		(*registry)(u).clean()
+		go (*discoverer)(u).keepSync(nodeActiveContext)
+		u.KeepAlive(nodeActiveContext) // 这里正常情况会 block
+		// 离开 block 说明节点 正常退出 或 出现掉线等问题
+
+		(*registry)(u).unregister()
+		// 尝试从 etcd 集群去除本节点信息，因为断线或退出了嘛，所以其他节点不要再发请求过来了
+		// 但是如果真断线了，其实连接不上 etcd 集群，所以这一步可有可无
+		// discoverer 不需要这种回收方法， 因为 nodeActiveContextCancel 后， 基于该 ctx 的 grpc.Conn 自己会被取消（我猜的
 		select {
-		case <-ctx.Done():
-			return
+		case <-rootContext.Done():
+			return // 如果是因为 rootCtx 被 cancel 了，表示程序正常退出
+		case <-nodeActiveContext.Done():
+			// 进入这个 case 说明是因为其他 ExecUnit 中止了
+			panic("TODO")
+			// u.waitReconnect()
 		default:
-			u.reconnect()
+			nodeActiveContextCancel() // 说明与 etcd 集群断开连接， 标记节点状态为 un-Active
+			u.reconnect() // 应当block 一直尝试重连
 		}
 	}
-}
-
-const (
-	registryPrefix = "/pome-r/"
-)
-
-type serviceName string
-
-func (s serviceName) concat(id clientv3.LeaseID) string {
-	var buf = make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, uint64(int64(id)))
-	return registryPrefix + string(s) + string(buf)
-}
-
-func (s *serviceName) split(raw []byte) (id int64) {
-	*s = serviceName(raw[len(registryPrefix) : len(raw)-8])
-	id = int64(binary.BigEndian.Uint64(raw[len(raw)-8:]))
-	return
 }
 
 type etcdClient struct {
@@ -76,23 +65,21 @@ type etcdClient struct {
 
 	serviceName serviceName
 	synced      map[string]map[int64]*node
-	lock        sync.Mutex
-
-	overCh chan struct{}
+	dLock       sync.Mutex
 }
 
-func (r *etcdClient) init(ctx context.Context, Endpoints []string, DialTimeout time.Duration) {
+func (r *etcdClient) init(ctx context.Context) {
 	client, err := clientv3.New(clientv3.Config{
-		Endpoints:   Endpoints,
-		DialTimeout: DialTimeout,
+		Endpoints:   []string{define.EtcdCluster},
+		DialTimeout: time.Second,
 	})
 	if err != nil {
-		panic("")
+		panic(err)
 	}
-	l := clientv3.NewLease(r.client)
-	resp, err := l.Grant(ctx, 20) //设置租约过期时间为20秒
+	l := clientv3.NewLease(client)
+	resp, err := l.Grant(ctx, CONFIG.LeaseTimeOut)
 	if err != nil {
-		panic("")
+		panic(err)
 	}
 
 	r.client = client
@@ -103,7 +90,7 @@ func (r *etcdClient) init(ctx context.Context, Endpoints []string, DialTimeout t
 func (r *etcdClient) KeepAlive(ctx context.Context) {
 	ch, err := r.lease.KeepAlive(ctx, r.id)
 	if err != nil {
-		panic("")
+		panic(err)
 	}
 	for {
 		select {
@@ -119,20 +106,27 @@ func (r *etcdClient) KeepAlive(ctx context.Context) {
 
 func (r *etcdClient) reconnect() {
 	panic("TODO")
+	nodeActiveContext, nodeActiveContextCancel = context.WithCancel(rootContext)
+	// 重连成功，则重置该 ctx
+	// 实际情况下，需要做一些额外判断，因为并发多个 ExecUnit 时，一个断线，会让其他 ExecUnit 也等待重连
+	(*etcdClient)(r).init(nodeActiveContext)
+	(*registry)(r).init(nodeActiveContext)
+	(*discoverer)(r).init(nodeActiveContext)
 }
 
 type registry etcdClient
 
 func (r *registry) init(ctx context.Context) error {
+	r.serviceName = name()
 	_, err := r.client.Put(
 		ctx,
 		r.serviceName.concat(r.id),
-		IPaddress(),
+		fmt.Sprintf("%s:%d", localhost(), define.SidecarPortOuter),
 		clientv3.WithLease(r.id),
 	)
 	return err
 }
 
-func (r *registry) clean()  {
+func (r *registry) unregister()  {
 	r.client.Delete(rootContext, r.serviceName.concat(r.id))
 }

@@ -1,22 +1,47 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"google.golang.org/grpc"
-	"pome/demo/B/guestbook"
 	"net"
+	"pome/define"
+	"pome/demo/proto"
+	"strconv"
 )
 
 type server struct{}
-var serverIns guestbook.GuestBookServiceServer = &server{}
+
+var s proto.ServiceBbServer = &server{}
+
+func (s *server) Do(ctx context.Context, request *proto.ServiceBbDoRequest) (*proto.ServiceBbDoResponse, error) {
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", define.SidecarPortInner), grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+	clientA := proto.NewServiceAaClient(conn)
+	respA, err := clientA.Do(context.TODO(), &proto.ServiceAaDoRequest{
+		Num: 2020,
+	})
+	if err != nil {
+		panic(err)
+	}
+	resp := &proto.ServiceBbDoResponse{
+		NewStr: request.Str + " World! " + strconv.Itoa(int(respA.NewNum)),
+	}
+	return resp, nil
+}
 
 func main() {
 	srv := grpc.NewServer()
-	guestbook.RegisterGuestBookServiceServer(srv, serverIns)
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 9100))
+	proto.RegisterServiceBbServer(srv, s)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", define.ServicePort))
 	if err != nil {
 		panic("failed launch server")
 	}
-	fmt.Println("server running")
+	fmt.Println("server B running")
 	srv.Serve(lis)
+	fmt.Println("server B done")
 }
+

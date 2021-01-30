@@ -1,0 +1,41 @@
+version: '3'
+
+networks:
+  pome_net:
+    ipam:
+      config:
+        - subnet: 192.168.111.0/24 # CIDR的网络前缀法表示掩码
+services:
+  pome_etcd:
+    image: bitnami/etcd
+    container_name: pome_etcd
+    environment:
+      ETCD_NAME: etcd
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+      ETCDCTL_API: "3"
+      ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
+      ETCD_ADVERTISE_CLIENT_URLS: "http://0.0.0.0:2379"
+    networks:
+      pome_net:
+        ipv4_address: 192.168.111.2 # 固定，请见 package define
+
+  pome_service_a:
+      image: pome_service_a:v1
+      container_name: pome_service_a
+      environment:
+        POME_ADDRESS: 192.168.111.10
+        POME_SERVICE_NAME: ServiceAa
+      networks:
+        pome_net:
+          ipv4_address: 192.168.111.10
+
+  pome_service_b:
+    image: pome_service_b:v1
+    container_name: pome_service_b
+    environment:
+      POME_ADDRESS: 192.168.111.11
+      POME_SERVICE_NAME: ServiceBb
+    networks:
+      pome_net:
+        ipv4_address: 192.168.111.11

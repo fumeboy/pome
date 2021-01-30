@@ -9,10 +9,16 @@ import (
 	"time"
 )
 
+/*
+	连接复用， 节点之间的 http2 连接可以复用
+	连接与 node 结构体绑定
+*/
+
 type configConnDial struct {
 	KeepAlive        time.Duration
 	KeepAliveTimeout time.Duration
 	DialTimeOut      time.Duration
+	LeaseTimeOut     int64
 }
 
 type cNode node
@@ -23,12 +29,12 @@ type NodePartConn struct {
 }
 
 func (n *cNode) Conn(ctx context.Context) (*grpc.ClientConn, error) {
-	if n.conn != nil && n.checkState() {
+	if n.conn != nil && n.active() {
 		return n.conn, nil
 	}
 	n.cLock.Lock()
 	defer n.cLock.Unlock()
-	if n.conn != nil && n.checkState() {
+	if n.conn != nil && n.active() {
 		return n.conn, nil
 	}
 	//close old conn
@@ -52,7 +58,7 @@ func (n *cNode) Conn(ctx context.Context) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-func (n *cNode) checkState() bool {
+func (n *cNode) active() bool {
 	switch n.conn.GetState() {
 	case connectivity.TransientFailure, connectivity.Shutdown:
 		return false

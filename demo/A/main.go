@@ -3,32 +3,32 @@ package main
 import (
 	"context"
 	"fmt"
-	"pome/demo/A/guestbook"
+	"google.golang.org/grpc"
+	"net"
+	"pome/define"
+	"pome/demo/proto"
 )
 
-const proxyAddress = "127.0.0.1:"+ "21000"
-// 真实的 B 端地址是 127.0.0.1: 9100
+type server struct{}
+
+var s proto.ServiceAaServer = &server{}
+
+func (s *server) Do(ctx context.Context, request *proto.ServiceAaDoRequest) (*proto.ServiceAaDoResponse, error) {
+	resp := &proto.ServiceAaDoResponse{
+		NewNum: request.Num + 1,
+	}
+	return resp, nil
+}
 
 func main() {
-	r := &guestbook.AddRequest{
-		Msg: &guestbook.Msg{
-			Email:   "test@qq.com",
-			Content: "dkfdkfdkfd",
-		},
-	}
-	_, err := Add(context.TODO(), r)
-	fmt.Println("add msg result:", err)
-
-	getReq := &guestbook.GetRequest{
-		Offset: 0,
-		Limit:  10,
-	}
-	result, err := Get(context.TODO(), getReq)
+	srv := grpc.NewServer()
+	proto.RegisterServiceAaServer(srv, s)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", define.ServicePort))
 	if err != nil {
-		fmt.Println("get msg failed,", err)
-		return
+		panic("failed launch server")
 	}
-	for _, msg := range result.Msgs {
-		fmt.Println("email:", msg.Email, "content:", msg.Content)
-	}
+	fmt.Println("server A running")
+	srv.Serve(lis)
+	fmt.Println("server A done")
 }
+
