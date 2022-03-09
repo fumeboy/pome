@@ -16,10 +16,22 @@ type server struct{}
 var s proto.ServiceAaServer = &server{}
 
 func (s *server) Do(ctx context.Context, request *proto.ServiceAaDoRequest) (*proto.ServiceAaDoResponse, error) {
-	fmt.Println("Do")
-
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", define.SidecarPortInner), grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+	client_inner := proto.NewServiceBbClient(conn)
+	// A.Do -> B.Do
+	resp_inner, err := client_inner.Do(context.TODO(), &proto.ServiceBbDoRequest{
+		Str: strconv.Itoa(int(request.Num + 1)),
+	})
+	if err != nil {
+		panic(err)
+	}
+	respnum, _ := strconv.Atoi(resp_inner.NewStr)
 	resp := &proto.ServiceAaDoResponse{
-		NewNum: int32(2),
+		NewNum: int32(respnum),
 	}
 	return resp, nil
 }

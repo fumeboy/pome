@@ -20,21 +20,24 @@ func (s *server) Do(ctx context.Context, request *proto.ServiceBbDoRequest) (*pr
 		panic(err)
 	}
 	defer conn.Close()
-	clientA := proto.NewServiceAaClient(conn)
-	respA, err := clientA.Do2(context.TODO(), &proto.ServiceAaDoRequest{
-		Num: 2020,
+	client_inner := proto.NewServiceAaClient(conn)
+	// B.Do -> A.Do2
+	reqnum, _ := strconv.Atoi(request.Str)
+	resp_inner, err := client_inner.Do2(context.TODO(), &proto.ServiceAaDoRequest{
+		Num: int32(reqnum + 1),
 	})
 	if err != nil {
 		panic(err)
 	}
 	resp := &proto.ServiceBbDoResponse{
-		NewStr: request.Str + " World! " + strconv.Itoa(int(respA.NewNum)),
+		NewStr: strconv.Itoa(int(resp_inner.NewNum)),
 	}
 	return resp, nil
 }
 func (s *server) Do2(ctx context.Context, request *proto.ServiceBbDoRequest) (*proto.ServiceBbDoResponse, error) {
+	reqnum, _ := strconv.Atoi(request.Str)
 	resp := &proto.ServiceBbDoResponse{
-		NewStr: "2000",
+		NewStr: strconv.Itoa(int(reqnum + 1)),
 	}
 	return resp, nil
 }
