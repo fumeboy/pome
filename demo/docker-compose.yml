@@ -1,10 +1,10 @@
-version: '3'
+version: '3.9'
 
 networks:
   pome_net:
     ipam:
       config:
-        - subnet: 192.168.111.0/24 # CIDR的网络前缀法表示掩码
+        - subnet: 192.168.111.0/24 
 services:
   pome_etcd:
     image: bitnami/etcd
@@ -26,6 +26,9 @@ services:
       environment:
         POME_ADDRESS: 192.168.111.10
         POME_SERVICE_NAME: ServiceAa
+      # ports:
+      #   - '20002:20002'
+      #   - '20000:20000'
       networks:
         pome_net:
           ipv4_address: 192.168.111.10
@@ -36,6 +39,9 @@ services:
     environment:
       POME_ADDRESS: 192.168.111.11
       POME_SERVICE_NAME: ServiceBb
+    # ports:
+    #   - '20002:20002'
+    #   - '20000:20000'
     networks:
       pome_net:
         ipv4_address: 192.168.111.11

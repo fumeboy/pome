@@ -1,6 +1,8 @@
 syntax = "proto3";
 package proto;
 
+option go_package = "./proto/proto";
+
 message ServiceAaDoRequest{
   int32 num = 1;
 }
@@ -11,4 +13,5 @@ message ServiceAaDoResponse{
 
 service ServiceAa {
   rpc Do(ServiceAaDoRequest) returns (ServiceAaDoResponse){}
+  rpc Do2(ServiceAaDoRequest) returns (ServiceAaDoResponse){}
 }

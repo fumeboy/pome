@@ -1,6 +1,6 @@
 demo 验证
     1 client 向 A 发送请求成功
-    2 client 向 B 发送请求，B 再向 A 请求，成功
+    2 client -> A.Do -> B.Do -> A.Do2 -> B.Do2
 
 暂时约定
     sidecar 监听端口

@@ -21,7 +21,7 @@ func (s *server) Do(ctx context.Context, request *proto.ServiceBbDoRequest) (*pr
 	}
 	defer conn.Close()
 	clientA := proto.NewServiceAaClient(conn)
-	respA, err := clientA.Do(context.TODO(), &proto.ServiceAaDoRequest{
+	respA, err := clientA.Do2(context.TODO(), &proto.ServiceAaDoRequest{
 		Num: 2020,
 	})
 	if err != nil {
@@ -29,6 +29,12 @@ func (s *server) Do(ctx context.Context, request *proto.ServiceBbDoRequest) (*pr
 	}
 	resp := &proto.ServiceBbDoResponse{
 		NewStr: request.Str + " World! " + strconv.Itoa(int(respA.NewNum)),
+	}
+	return resp, nil
+}
+func (s *server) Do2(ctx context.Context, request *proto.ServiceBbDoRequest) (*proto.ServiceBbDoResponse, error) {
+	resp := &proto.ServiceBbDoResponse{
+		NewStr: "2000",
 	}
 	return resp, nil
 }
@@ -44,4 +50,3 @@ func main() {
 	srv.Serve(lis)
 	fmt.Println("server B done")
 }
-
