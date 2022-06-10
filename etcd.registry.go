@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 	"pome/define"
 	"sync"
 	"time"
@@ -29,32 +28,46 @@ import (
  		一个是 service 节点所在的 pod 宕机，一个是 etcd 集群下线。
 */
 
-func ExecUnitEtcd() {
+var node_id int64
+
+func ExecUnitEtcd(nodeActiveContext context.Context, nodeActiveContextCancel func(), exitFinishChannel chan bool) {
 	u := &etcdClient{}
 	P.discoverer = (*discoverer)(u)
 	(*etcdClient)(u).init(nodeActiveContext)
 	(*registry)(u).init(nodeActiveContext)
 	(*discoverer)(u).init(nodeActiveContext)
-	for {
-		go (*discoverer)(u).keepSync(nodeActiveContext)
-		u.KeepAlive(nodeActiveContext) // 这里正常情况会 block
-		// 离开 block 说明节点 正常退出 或 出现掉线等问题
 
-		(*registry)(u).unregister()
-		// 尝试从 etcd 集群去除本节点信息，因为断线或退出了嘛，所以其他节点不要再发请求过来了
-		// 但是如果真断线了，其实连接不上 etcd 集群，所以这一步可有可无
-		// discoverer 不需要这种回收方法， 因为 nodeActiveContextCancel 后， 基于该 ctx 的 grpc.Conn 自己会被取消（我猜的
+	go (*discoverer)(u).keepSync(nodeActiveContext)
+
+	keepalive, err := u.lease.KeepAlive(nodeActiveContext, u.id)
+	if err != nil {
+		panic(err)
+	}
+L:
+	for {
 		select {
-		case <-rootContext.Done():
-			return // 如果是因为 rootCtx 被 cancel 了，表示程序正常退出
 		case <-nodeActiveContext.Done():
-			// 进入这个 case 说明是因为其他 ExecUnit 中止了
-			panic("TODO")
-			// u.waitReconnect()
-		default:
-			nodeActiveContextCancel() // 说明与 etcd 集群断开连接， 标记节点状态为 un-Active
-			u.reconnect() // 应当block 一直尝试重连
+			break L
+		case ret := <-keepalive:
+			if ret == nil {
+				break L
+			}
 		}
+	}
+	(*registry)(u).unregister(nodeActiveContext)
+	nodeActiveContextCancel()
+	exitFinishChannel <- true
+}
+
+type serviceNodes struct {
+	lastMaxDelay int64
+	nodes        map[int64]*node
+	lock         sync.RWMutex
+}
+
+func newServiceNodes() *serviceNodes {
+	return &serviceNodes{
+		nodes: map[int64]*node{},
 	}
 }
 
@@ -64,7 +77,7 @@ type etcdClient struct {
 	lease  clientv3.Lease
 
 	serviceName serviceName
-	synced      map[string]map[int64]*node
+	synced      map[string]*serviceNodes
 	dLock       sync.Mutex
 }
 
@@ -84,34 +97,8 @@ func (r *etcdClient) init(ctx context.Context) {
 
 	r.client = client
 	r.id = resp.ID
+	node_id = int64(r.id)
 	r.lease = l
-}
-
-func (r *etcdClient) KeepAlive(ctx context.Context) {
-	ch, err := r.lease.KeepAlive(ctx, r.id)
-	if err != nil {
-		panic(err)
-	}
-	for {
-		select {
-		case ret := <-ch:
-			if ret == nil { // 续租失败
-				return
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (r *etcdClient) reconnect() {
-	panic("TODO")
-	nodeActiveContext, nodeActiveContextCancel = context.WithCancel(rootContext)
-	// 重连成功，则重置该 ctx
-	// 实际情况下，需要做一些额外判断，因为并发多个 ExecUnit 时，一个断线，会让其他 ExecUnit 也等待重连
-	(*etcdClient)(r).init(nodeActiveContext)
-	(*registry)(r).init(nodeActiveContext)
-	(*discoverer)(r).init(nodeActiveContext)
 }
 
 type registry etcdClient
@@ -121,12 +108,12 @@ func (r *registry) init(ctx context.Context) error {
 	_, err := r.client.Put(
 		ctx,
 		r.serviceName.concat(r.id),
-		fmt.Sprintf("%s:%d", localhost(), define.SidecarPortOuter),
+		localhost(),
 		clientv3.WithLease(r.id),
 	)
 	return err
 }
 
-func (r *registry) unregister()  {
-	r.client.Delete(rootContext, r.serviceName.concat(r.id))
+func (r *registry) unregister(ctx context.Context) {
+	r.lease.Revoke(ctx, r.id)
 }

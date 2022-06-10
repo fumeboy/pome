@@ -20,6 +20,9 @@ const _ = grpc.SupportPackageIsVersion7
 type ServiceAaClient interface {
 	Do(ctx context.Context, in *ServiceAaDoRequest, opts ...grpc.CallOption) (*ServiceAaDoResponse, error)
 	Do2(ctx context.Context, in *ServiceAaDoRequest, opts ...grpc.CallOption) (*ServiceAaDoResponse, error)
+	Msg(ctx context.Context, in *ServiceAaMsgReq, opts ...grpc.CallOption) (*EmptyA, error)
+	MsgProxy(ctx context.Context, in *ServiceAaMsgReq, opts ...grpc.CallOption) (*EmptyA, error)
+	GraceStopTest(ctx context.Context, in *ServiceAaMsgReq, opts ...grpc.CallOption) (*ServiceAaMsgReq, error)
 }
 
 type serviceAaClient struct {
@@ -48,12 +51,42 @@ func (c *serviceAaClient) Do2(ctx context.Context, in *ServiceAaDoRequest, opts 
 	return out, nil
 }
 
+func (c *serviceAaClient) Msg(ctx context.Context, in *ServiceAaMsgReq, opts ...grpc.CallOption) (*EmptyA, error) {
+	out := new(EmptyA)
+	err := c.cc.Invoke(ctx, "/proto.ServiceAa/Msg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serviceAaClient) MsgProxy(ctx context.Context, in *ServiceAaMsgReq, opts ...grpc.CallOption) (*EmptyA, error) {
+	out := new(EmptyA)
+	err := c.cc.Invoke(ctx, "/proto.ServiceAa/MsgProxy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serviceAaClient) GraceStopTest(ctx context.Context, in *ServiceAaMsgReq, opts ...grpc.CallOption) (*ServiceAaMsgReq, error) {
+	out := new(ServiceAaMsgReq)
+	err := c.cc.Invoke(ctx, "/proto.ServiceAa/GraceStopTest", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServiceAaServer is the server API for ServiceAa service.
 // All implementations should embed UnimplementedServiceAaServer
 // for forward compatibility
 type ServiceAaServer interface {
 	Do(context.Context, *ServiceAaDoRequest) (*ServiceAaDoResponse, error)
 	Do2(context.Context, *ServiceAaDoRequest) (*ServiceAaDoResponse, error)
+	Msg(context.Context, *ServiceAaMsgReq) (*EmptyA, error)
+	MsgProxy(context.Context, *ServiceAaMsgReq) (*EmptyA, error)
+	GraceStopTest(context.Context, *ServiceAaMsgReq) (*ServiceAaMsgReq, error)
 }
 
 // UnimplementedServiceAaServer should be embedded to have forward compatible implementations.
@@ -65,6 +98,15 @@ func (UnimplementedServiceAaServer) Do(context.Context, *ServiceAaDoRequest) (*S
 }
 func (UnimplementedServiceAaServer) Do2(context.Context, *ServiceAaDoRequest) (*ServiceAaDoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Do2 not implemented")
+}
+func (UnimplementedServiceAaServer) Msg(context.Context, *ServiceAaMsgReq) (*EmptyA, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Msg not implemented")
+}
+func (UnimplementedServiceAaServer) MsgProxy(context.Context, *ServiceAaMsgReq) (*EmptyA, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MsgProxy not implemented")
+}
+func (UnimplementedServiceAaServer) GraceStopTest(context.Context, *ServiceAaMsgReq) (*ServiceAaMsgReq, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GraceStopTest not implemented")
 }
 
 // UnsafeServiceAaServer may be embedded to opt out of forward compatibility for this service.
@@ -114,6 +156,60 @@ func _ServiceAa_Do2_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServiceAa_Msg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServiceAaMsgReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceAaServer).Msg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ServiceAa/Msg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceAaServer).Msg(ctx, req.(*ServiceAaMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ServiceAa_MsgProxy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServiceAaMsgReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceAaServer).MsgProxy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ServiceAa/MsgProxy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceAaServer).MsgProxy(ctx, req.(*ServiceAaMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ServiceAa_GraceStopTest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServiceAaMsgReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceAaServer).GraceStopTest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ServiceAa/GraceStopTest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceAaServer).GraceStopTest(ctx, req.(*ServiceAaMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServiceAa_ServiceDesc is the grpc.ServiceDesc for ServiceAa service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -128,6 +224,18 @@ var ServiceAa_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Do2",
 			Handler:    _ServiceAa_Do2_Handler,
+		},
+		{
+			MethodName: "Msg",
+			Handler:    _ServiceAa_Msg_Handler,
+		},
+		{
+			MethodName: "MsgProxy",
+			Handler:    _ServiceAa_MsgProxy_Handler,
+		},
+		{
+			MethodName: "GraceStopTest",
+			Handler:    _ServiceAa_GraceStopTest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

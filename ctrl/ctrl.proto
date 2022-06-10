@@ -1,0 +1,55 @@
+syntax = "proto3";
+package ctrl;
+
+option go_package = "./ctrl/ctrl";
+
+message SearchLogByTraceIDRequest{
+  int64 time_start = 1;
+  int64 time_end = 2;
+  int64 trace_id = 3;
+}
+
+message SearchLogByTraceIDResponse{
+  repeated string log_records = 1;
+}
+
+message StopReq{
+  int64 node_id = 1;
+}
+
+message StopResp{
+  string msg = 1;
+  int64 status = 2;
+}
+
+message StartReq{
+}
+
+message StartResp{
+  string msg = 1;
+  int64 status = 2;
+}
+
+message UCReq{
+  string context = 1;
+}
+
+message UCResp{
+  string msg = 1;
+  int64 status = 2;
+}
+
+message RCReq{
+}
+
+message RCResp{
+  string context = 1;
+}
+
+service Sidecar {
+  rpc SearchLogByTraceID(SearchLogByTraceIDRequest) returns (SearchLogByTraceIDResponse){}
+  rpc Stop(StopReq) returns (StopResp) {}
+  rpc Start(StartReq) returns (StartResp) {}
+  rpc UpdateConfig(UCReq) returns(UCResp) {}
+  rpc ReadConfig(RCReq) returns(RCResp) {}
+}

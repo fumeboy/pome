@@ -1,8 +1,13 @@
 package define
 
-const SidecarPortInner = 20001
-const SidecarPortOuter = 20002
-const ServicePort = 20000
+const SidecarPortInnerGRPC = 20001
+const SidecarPortOuterGRPC = 20002
+const ServicePortGRPC = 20000
+
+const SidecarPortCtrl = 20003
+
+const SidecarPortInnerTCP = 20011
+const SidecarPortOuterTCP = 20012
 
 /*
 	微服务启动了，怎么和 etcd 集群联系？

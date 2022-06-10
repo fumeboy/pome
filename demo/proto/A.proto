@@ -11,7 +11,16 @@ message ServiceAaDoResponse{
   int32 new_num = 1;
 }
 
+message ServiceAaMsgReq{
+  string context = 1;
+}
+
+message EmptyA{}
+
 service ServiceAa {
   rpc Do(ServiceAaDoRequest) returns (ServiceAaDoResponse){}
   rpc Do2(ServiceAaDoRequest) returns (ServiceAaDoResponse){}
+  rpc Msg(ServiceAaMsgReq) returns (EmptyA) {}
+  rpc MsgProxy(ServiceAaMsgReq) returns (EmptyA) {}
+  rpc GraceStopTest(ServiceAaMsgReq) returns (ServiceAaMsgReq) {}
 }

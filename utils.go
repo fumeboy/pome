@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/binary"
-	"go.etcd.io/etcd/clientv3"
-	"google.golang.org/grpc/v2"
+	"go.etcd.io/etcd/client/v3"
+	"google.golang.org/grpc"
 	"os"
 	"pome/define"
 )
@@ -28,16 +28,33 @@ func (s *serviceName) split(raw []byte) (id int64) {
 
 func serviceNameFrom(s grpc.ServerStream) string {
 	fullMethodName, _ := grpc.MethodFromServerStream(s)
-	var i,j int
-	for i = len(fullMethodName) - 1; i >= 0 && fullMethodName[i] != '/'; i--{}
-	for j = i; j >= 0 && fullMethodName[j] != '.'; j--{}
-	return string(fullMethodName[j+1:i])
+	var i, j int
+	for i = len(fullMethodName) - 1; i >= 0 && fullMethodName[i] != '/'; i-- {
+	}
+	for j = i; j >= 0 && fullMethodName[j] != '.'; j-- {
+	}
+	return string(fullMethodName[j+1 : i])
+}
+func fullServiceNameFrom(s grpc.ServerStream) (string, string) {
+	fullMethodName, _ := grpc.MethodFromServerStream(s)
+	var i, j int
+	for i = len(fullMethodName) - 1; i >= 0 && fullMethodName[i] != '/'; i-- {
+	}
+	for j = i; j >= 0 && fullMethodName[j] != '.'; j-- {
+	}
+	return string(fullMethodName[j+1 : i]), string(fullMethodName[i+1:])
 }
 
 func localhost() string { // 返回本节点在 service mesh 中的地址，这一步暂时没想到怎么做比较好，通过 环境变量 写入？
 	return os.Getenv(define.POME_ADDRESS)
 }
 
+var serviceNameThis serviceName
+
 func name() serviceName {
-	return serviceName(os.Getenv(define.POME_SERVICE_NAME))
+	if serviceNameThis != "" {
+		return serviceNameThis
+	}
+	serviceNameThis = serviceName(os.Getenv(define.POME_SERVICE_NAME))
+	return serviceNameThis
 }

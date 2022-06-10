@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
-	"google.golang.org/grpc/v2"
-	"google.golang.org/grpc/v2/connectivity"
-	"google.golang.org/grpc/v2/keepalive"
-	"sync"
+	"fmt"
+	"pome/define"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 )
 
 /*
@@ -21,44 +24,51 @@ type configConnDial struct {
 	LeaseTimeOut     int64
 }
 
-type cNode node
+type nodeGRPC node
 
 type NodePartConn struct {
-	conn  *grpc.ClientConn
-	cLock sync.Mutex
+	conn *grpc.ClientConn
 }
 
-func (n *cNode) Conn(ctx context.Context) (*grpc.ClientConn, error) {
+func (n *nodeGRPC) Conn(ctx context.Context) (*grpc.ClientConn, int, error) {
 	if n.conn != nil && n.active() {
-		return n.conn, nil
+		return n.conn, -1, nil
 	}
-	n.cLock.Lock()
-	defer n.cLock.Unlock()
+	n.lock.Lock()
+	defer n.lock.Unlock()
 	if n.conn != nil && n.active() {
-		return n.conn, nil
+		return n.conn, -1, nil
 	}
 	//close old conn
 	if n.conn != nil {
 		n.conn.Close()
 	}
 	// new c
+	var addr = n.addr
+	if addr == "127.0.0.1" {
+		addr += fmt.Sprintf(":%d", define.ServicePortGRPC)
+	} else {
+		addr += fmt.Sprintf(":%d", define.SidecarPortOuterGRPC)
+	}
+	start := time.Now()
 	conn, err := grpc.DialContext(
 		ctx,
-		n.addr,
-		grpc.WithInsecure(),
+		addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:    CONFIG.configConnDial.KeepAlive,
 			Timeout: CONFIG.configConnDial.KeepAliveTimeout,
 		}))
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
+	elapsed := time.Since(start)
 	n.conn = conn
-	return conn, nil
+	return conn, int(elapsed.Milliseconds()), nil
 }
 
-func (n *cNode) active() bool {
+func (n *nodeGRPC) active() bool {
 	switch n.conn.GetState() {
 	case connectivity.TransientFailure, connectivity.Shutdown:
 		return false
@@ -66,10 +76,10 @@ func (n *cNode) active() bool {
 	return true
 }
 
-func (n *cNode) close() {
-	n.cLock.Lock()
+func (n *nodeGRPC) close() {
+	n.lock.Lock()
 	if n.conn != nil {
 		n.conn.Close()
 	}
-	n.cLock.Unlock()
+	n.lock.Unlock()
 }

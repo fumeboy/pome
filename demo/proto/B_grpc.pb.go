@@ -20,6 +20,8 @@ const _ = grpc.SupportPackageIsVersion7
 type ServiceBbClient interface {
 	Do(ctx context.Context, in *ServiceBbDoRequest, opts ...grpc.CallOption) (*ServiceBbDoResponse, error)
 	Do2(ctx context.Context, in *ServiceBbDoRequest, opts ...grpc.CallOption) (*ServiceBbDoResponse, error)
+	Msg(ctx context.Context, in *ServiceBbMsgReq, opts ...grpc.CallOption) (*EmptyB, error)
+	MsgProxy(ctx context.Context, in *ServiceBbMsgReq, opts ...grpc.CallOption) (*EmptyB, error)
 }
 
 type serviceBbClient struct {
@@ -48,12 +50,32 @@ func (c *serviceBbClient) Do2(ctx context.Context, in *ServiceBbDoRequest, opts 
 	return out, nil
 }
 
+func (c *serviceBbClient) Msg(ctx context.Context, in *ServiceBbMsgReq, opts ...grpc.CallOption) (*EmptyB, error) {
+	out := new(EmptyB)
+	err := c.cc.Invoke(ctx, "/proto.ServiceBb/Msg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serviceBbClient) MsgProxy(ctx context.Context, in *ServiceBbMsgReq, opts ...grpc.CallOption) (*EmptyB, error) {
+	out := new(EmptyB)
+	err := c.cc.Invoke(ctx, "/proto.ServiceBb/MsgProxy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServiceBbServer is the server API for ServiceBb service.
 // All implementations should embed UnimplementedServiceBbServer
 // for forward compatibility
 type ServiceBbServer interface {
 	Do(context.Context, *ServiceBbDoRequest) (*ServiceBbDoResponse, error)
 	Do2(context.Context, *ServiceBbDoRequest) (*ServiceBbDoResponse, error)
+	Msg(context.Context, *ServiceBbMsgReq) (*EmptyB, error)
+	MsgProxy(context.Context, *ServiceBbMsgReq) (*EmptyB, error)
 }
 
 // UnimplementedServiceBbServer should be embedded to have forward compatible implementations.
@@ -65,6 +87,12 @@ func (UnimplementedServiceBbServer) Do(context.Context, *ServiceBbDoRequest) (*S
 }
 func (UnimplementedServiceBbServer) Do2(context.Context, *ServiceBbDoRequest) (*ServiceBbDoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Do2 not implemented")
+}
+func (UnimplementedServiceBbServer) Msg(context.Context, *ServiceBbMsgReq) (*EmptyB, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Msg not implemented")
+}
+func (UnimplementedServiceBbServer) MsgProxy(context.Context, *ServiceBbMsgReq) (*EmptyB, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MsgProxy not implemented")
 }
 
 // UnsafeServiceBbServer may be embedded to opt out of forward compatibility for this service.
@@ -114,6 +142,42 @@ func _ServiceBb_Do2_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServiceBb_Msg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServiceBbMsgReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceBbServer).Msg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ServiceBb/Msg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceBbServer).Msg(ctx, req.(*ServiceBbMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ServiceBb_MsgProxy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServiceBbMsgReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceBbServer).MsgProxy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.ServiceBb/MsgProxy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceBbServer).MsgProxy(ctx, req.(*ServiceBbMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServiceBb_ServiceDesc is the grpc.ServiceDesc for ServiceBb service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -128,6 +192,14 @@ var ServiceBb_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Do2",
 			Handler:    _ServiceBb_Do2_Handler,
+		},
+		{
+			MethodName: "Msg",
+			Handler:    _ServiceBb_Msg_Handler,
+		},
+		{
+			MethodName: "MsgProxy",
+			Handler:    _ServiceBb_MsgProxy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

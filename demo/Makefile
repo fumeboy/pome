@@ -8,16 +8,17 @@ initA:
 initB:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build ./B/*.go
 	docker build -t pome_service_b:v1 .
+initC:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build ./C/*.go
+	docker build -t pome_service_c:v1 .
 init:
 	make initA
 	make initB
+	make initC
 
 prepare:
 	docker-compose up pome_etcd
 
-test:
-	docker-compose start pome_service_a
-	docker-compose start pome_service_b
-	go run ./client.go
-	docker-compose stop pome_service_a
-	docker-compose stop pome_service_b
+t:
+	cd ./test
+	sh ./build.sh
